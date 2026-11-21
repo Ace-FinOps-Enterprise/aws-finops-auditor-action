@@ -4,7 +4,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  file-mode:
+  live-wiring:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run action with no inputs (live mode)
+        uses: Ace-FinOps-Enterprise/aws-finops-auditor-action@v1
+    file-mode:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,9 +31,3 @@ jobs:
         run: |
           echo "monthly-waste=${{ steps.audit.outputs.monthly-waste }}"
           echo "annual-waste=${{ steps.audit.outputs.annual-waste }}"
-    live-wiring:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run action with no inputs (live mode)
-        uses: Ace-FinOps-Enterprise/aws-finops-auditor-action@v1
