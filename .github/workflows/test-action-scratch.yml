@@ -1,0 +1,24 @@
+name: Test Action Scratch (temporary)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create sample CSV
+        run: |
+          cat > sample.csv << 'EOF'
+          Resource_ID,Monthly_Cost_USD,CPU_Util,Unattached_Storage_Cost,Is_Public,Is_Encrypted
+          vol-0123456789abcdef0,15.50,0.0,15.50,False,False
+          i-0987654321fedcba0,120.00,2.1,0.0,True,True
+          EOF
+      - name: Run the Action (no key)
+        id: audit
+        uses: Ace-FinOps-Enterprise/aws-finops-auditor-action@v1
+        with:
+          file: sample.csv
+      - name: Show outputs
+        run: |
+          echo "monthly=${{ steps.audit.outputs.monthly-waste }}"
+          echo "annual=${{ steps.audit.outputs.annual-waste }}"
