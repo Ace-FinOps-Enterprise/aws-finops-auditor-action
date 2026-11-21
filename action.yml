@@ -11,13 +11,17 @@ inputs:
     required: false
     default: ''
   fail-on-waste:
-    description: 'Fail workflow if monthly waste in USD exceeds this threshold (e.g., 100). Empty disables failure.'
+    description: 'Fail workflow if monthly waste in USD exceeds this threshold (e.g., 100). Empty disables failure. Pro feature: requires gumroad_license_key.'
+    required: false
+    default: ''
+  gumroad_license_key:
+    description: 'Optional Gumroad license key (Pro subscription). Pass as ${{ secrets.GUMROAD_LICENSE_KEY }}. Unlocks Bash remediation artifacts, CSV compliance exports, and fail-on-waste threshold enforcement.'
     required: false
     default: ''
   package-version:
     description: 'PyPI version constraint for aws-finops-auditor'
     required: false
-    default: '>=1.0.0'
+    default: '>=1.1.0'
 
 outputs:
   monthly-waste:
@@ -45,6 +49,7 @@ runs:
       env:
         INPUT_FILE: ${{ inputs.file }}
         FAIL_THRESHOLD: ${{ inputs.fail-on-waste }}
+        GUMROAD_LICENSE_KEY: ${{ inputs.gumroad_license_key }}
       run: |
         python3 - << 'EOF'
         import os, re, subprocess, sys
@@ -53,6 +58,13 @@ runs:
         input_file = os.environ.get("INPUT_FILE", "").strip()
         if input_file:
             cmd.extend(["--file", input_file])
+        # Only add the Pro flags when a key is present: passed without a
+        # key they would hit the verifier's upsell exit and break free runs.
+        if os.environ.get("GUMROAD_LICENSE_KEY", "").strip():
+            cmd.extend(["--remediate", "--compliance"])
+        thresh = os.environ.get("FAIL_THRESHOLD", "").strip()
+        if thresh:
+            cmd.extend(["--fail-on-waste", thresh])
 
         proc = subprocess.run(cmd, capture_output=True, text=True)
         output = (proc.stdout or "") + ("\n" + proc.stderr if proc.stderr else "")
@@ -87,9 +99,4 @@ runs:
 
         if proc.returncode != 0:
             sys.exit(proc.returncode)
-
-        thresh = os.environ.get("FAIL_THRESHOLD", "").strip()
-        if thresh and monthly > float(thresh):
-            print(f"::error::Monthly AWS waste (${monthly:,.2f}) exceeded threshold (${float(thresh):,.2f}).")
-            sys.exit(1)
         EOF
