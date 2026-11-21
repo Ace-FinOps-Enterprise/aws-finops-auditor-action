@@ -38,14 +38,17 @@ jobs:
 
 > `gumroad_license_key` is optional. Without it the Action runs free: it reports waste totals and exits 0. With a Pro key it also generates Bash remediation artifacts, CSV compliance exports, and enforces `fail-on-waste`.
 
+> Without `file`, the Action runs a live scan against your AWS account using the credentials from the Configure AWS Credentials step (`region` defaults to `us-east-1`; set it to scan elsewhere). Pass `file` for an offline CSV audit instead. Live scanning is a free core capability: it runs the same read-only checks and never triggers the license check.
+
 ## Inputs & Outputs
 
 | Input | Description | Default |
 | :--- | :--- | :--- |
 | `file` | Optional CSV path for offline/demo audits | `''` |
+| `region` | AWS region(s) to scan in live mode, comma-separated | `us-east-1` |
 | `fail-on-waste` | Fail workflow if monthly USD waste exceeds threshold **(Pro)** | `''` |
 | `gumroad_license_key` | Pro subscription key, passed as `${{ secrets.GUMROAD_LICENSE_KEY }}` | `''` |
-| `package-version` | PyPI version constraint for `aws-finops-auditor` | `>=1.1.0` |
+| `package-version` | PyPI version constraint for `aws-finops-auditor` | `>=1.2.0` |
 
 | Output | Description |
 | :--- | :--- |
