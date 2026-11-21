@@ -15,7 +15,7 @@ inputs:
     required: false
     default: ''
   gumroad_license_key:
-    description: 'Optional Gumroad license key (Pro subscription). Pass as ${{ secrets.GUMROAD_LICENSE_KEY }}. Unlocks Bash remediation artifacts, CSV compliance exports, and fail-on-waste threshold enforcement.'
+    description: 'Optional Gumroad license key (Pro subscription). Pass it as a repository secret named GUMROAD_LICENSE_KEY. Unlocks Bash remediation artifacts, CSV compliance exports, and fail-on-waste threshold enforcement.'
     required: false
     default: ''
   package-version:
