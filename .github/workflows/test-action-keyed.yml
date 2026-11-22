@@ -1,0 +1,59 @@
+---
+name: Test Action (Keyed)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  keyed-audit:
+    name: keyed file-mode audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Write sample CSV
+        run: |
+          cat > sample.csv << 'CSVEOF'
+          Resource_ID,Monthly_Cost_USD,CPU_Util,Unattached_Storage_Cost,Is_Public,Is_Encrypted,State,Tags
+          vol-0123456789abcdef0,15.50,0.0,15.50,False,False,available,"[{'Key': 'Department', 'Value': 'QA'}]"
+          i-0987654321fedcba0,120.00,2.1,0.0,True,True,running,"[{'Key': 'Owner', 'Value': 'DevOps'}]"
+          vol-1111222233334444,45.00,85.4,0.0,False,True,in-use,"[{'Key': 'Project', 'Value': 'Marketing'}]"
+          CSVEOF
+      - name: Run auditor with license key
+        id: audit
+        uses: ./
+        with:
+          file: sample.csv
+          gumroad_license_key: ${{ secrets.GUMROAD_LICENSE_KEY }}
+      - name: Check outputs
+        run: |
+          echo "monthly=${{ steps.audit.outputs.monthly-waste }} annual=${{ steps.audit.outputs.annual-waste }}"
+          test "${{ steps.audit.outputs.monthly-waste }}" = "151.00"
+
+  keyed-fail-on-waste:
+    name: keyed fail-on-waste gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Write sample CSV
+        run: |
+          cat > sample.csv << 'CSVEOF'
+          Resource_ID,Monthly_Cost_USD,CPU_Util,Unattached_Storage_Cost,Is_Public,Is_Encrypted,State,Tags
+          vol-0123456789abcdef0,15.50,0.0,15.50,False,False,available,"[{'Key': 'Department', 'Value': 'QA'}]"
+          i-0987654321fedcba0,120.00,2.1,0.0,True,True,running,"[{'Key': 'Owner', 'Value': 'DevOps'}]"
+          vol-1111222233334444,45.00,85.4,0.0,False,True,in-use,"[{'Key': 'Project', 'Value': 'Marketing'}]"
+          CSVEOF
+      - name: Run auditor with key and threshold 100
+        id: gated
+        continue-on-error: true
+        uses: ./
+        with:
+          file: sample.csv
+          gumroad_license_key: ${{ secrets.GUMROAD_LICENSE_KEY }}
+          fail-on-waste: '100'
+      - name: Report gate outcome
+        run: |
+          echo "outcome=${{ steps.gated.outcome }} monthly=${{ steps.gated.outputs.monthly-waste }} annual=${{ steps.gated.outputs.annual-waste }}"
+---
